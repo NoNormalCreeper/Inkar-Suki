@@ -144,16 +144,39 @@ async def generate_calculator_img_dujing(server: str, name: str):
     tables = []
     max_dps = calculated_data["data"]["result"] # 手打
     min_dps = int(max_dps*0.985) # 一键宏
-    for skill_sort in range(len(calculated_data["data"]["skills"])):
-        tables.append(
-            Template(template_calculator_dujing).render(**{
-                "skill": calculated_data["data"]["skills"][skill_sort],
-                "display": str(int(round(float(calculated_data["data"]["percent"][skill_sort][:-1])/float(calculated_data["data"]["percent"][0][:-1]), 2)*100)) + "%",
-                "percent": calculated_data["data"]["percent"][skill_sort],
-                "count": str(calculated_data["data"]["counts"][skill_sort]) + "（" + calculated_data["data"]["critical"][skill_sort] + "会心）",
-                "value": calculated_data["data"]["damages"][skill_sort]
-            })
-        )
+    # 分为两栏渲染，从上至下，从左至右阅读
+    for index_l in range(len(calculated_data) // 2):
+        index_r = index_l + len(calculated_data) // 2
+        try:
+            tables.append(
+                Template(template_calculator_dujing).render(**{
+                    "skill": calculated_data["data"]["skills"][index_l],
+                    "display": str(int(round(float(calculated_data["data"]["percent"][index_l][:-1])/float(calculated_data["data"]["percent"][0][:-1]), 2)*100)) + "%",
+                    "percent": calculated_data["data"]["percent"][index_l],
+                    "count": str(calculated_data["data"]["counts"][index_l]) + "（" + calculated_data["data"]["critical"][index_l] + "会心）",
+                    "value": calculated_data["data"]["damages"][index_l],
+                    "skill_2": calculated_data["data"]["skills"][index_r],
+                    "display_2": str(int(round(float(calculated_data["data"]["percent"][index_r][:-1])/float(calculated_data["data"]["percent"][0][:-1]), 2)*100)) + "%",
+                    "percent_2": calculated_data["data"]["percent"][index_r],
+                    "count_2": str(calculated_data["data"]["counts"][index_r]) + "（" + calculated_data["data"]["critical"][index_r] + "会心）",
+                    "value_2": calculated_data["data"]["damages"][index_r]
+                })
+            )
+        except IndexError:
+            tables.append(
+                Template(template_calculator_dujing).render(**{
+                    "skill": calculated_data["data"]["skills"][index_l],
+                    "display": str(int(round(float(calculated_data["data"]["percent"][index_l][:-1])/float(calculated_data["data"]["percent"][0][:-1]), 2)*100)) + "%",
+                    "percent": calculated_data["data"]["percent"][index_l],
+                    "count": str(calculated_data["data"]["counts"][index_l]) + "（" + calculated_data["data"]["critical"][index_l] + "会心）",
+                    "value": calculated_data["data"]["damages"][index_l],
+                    "skill_2": "",
+                    "display_2": "",
+                    "percent_2": "",
+                    "count_2": "",
+                    "value_2": ""
+                })
+            )
     html = str(
         SimpleHTML(
             html_type = "jx3",

@@ -18,7 +18,16 @@ template_calculator_dujing = """
         </div>
     </td>
     <td class="short-column">{{ count }}</td>
-    <td class="short-column">{{ value }}</td>
+    <td class="short-column r-border">{{ value }}</td>
+    <td class="short-column">{{ skill_2 }}</td>
+    <td class="short-column">
+        <div class="progress-bar" style="margin: 0 auto;">
+            <div class="progress" style="width: {{ display_2 }};"></div>
+            <span class="progress-text">{{ percent_2 }}</span>
+        </div>
+    </td>
+    <td class="short-column">{{ count_2 }}</td>
+    <td class="short-column">{{ value_2 }}</td>
 </tr>"""
 
 msgbox_shanhaixinjue = """
