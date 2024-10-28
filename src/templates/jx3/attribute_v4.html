@@ -154,6 +154,7 @@
 
         .calculator {
             padding: 60px;
+            color: black;
         }
 
         .calculator .message-box {
@@ -386,8 +387,8 @@
             </div>
         </div>
     </div>
-    <div class="calculator">
-    <div class="total" style="display: inline-block;">
+    <div class="calculator section">
+    <div class="total" style="/* display: inline-block; */">
         <div class="message-box">
             {{ msgbox }}
         </div>
@@ -409,7 +410,7 @@
                 </tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="7">&copy; Inkar Suki · {{ school }}DPS计算器 · {{ server }} · {{ name }} ·
+                        <td colspan="8">&copy; Inkar Suki · {{ school }}DPS计算器 · {{ server }} · {{ name }} ·
                             06:41<br>计算器数据来源：{{ calculator }}
                         </td>
                     </tr>
