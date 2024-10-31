@@ -8,3 +8,35 @@ template_attrs_v4 = """
     </td>
     <td>{{ source }}</td>
 </tr>"""
+
+template_calculator_dujing_v2 = """
+<tr>
+    <td class="short-column">{{ skill }}</td>
+    <td class="short-column">
+        <div class="progress-bar" style="margin: 0 auto;">
+            <div class="progress" style="width: {{ display }};"></div>
+            <span class="progress-text">{{ percent }}</span>
+        </div>
+    </td>
+    <td class="short-column">{{ count }}</td>
+    <td class="short-column r-border">{{ value }}</td>
+    <td class="short-column">{{ skill_2 }}</td>
+    <td class="short-column">
+        <div class="progress-bar" style="margin: 0 auto;">
+            <div class="progress" style="width: {{ display_2 }};"></div>
+            <span class="progress-text">{{ percent_2 }}</span>
+        </div>
+    </td>
+    <td class="short-column">{{ count_2 }}</td>
+    <td class="short-column">{{ value_2 }}</td>
+</tr>"""
+
+msgbox_dujing = """
+<div class="element">
+    <div class="cell-title"><span>手打</span></div>
+    <div class="cell">{{ max }}</div>
+</div>
+<div class="element">
+    <div class="cell-title"><span>一键宏</span></div>
+    <div class="cell">{{ min }}</div>
+</div>"""

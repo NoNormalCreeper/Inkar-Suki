@@ -1,4 +1,6 @@
 from pathlib import Path
+from typing import List, Literal
+from pydantic import BaseModel
 from jinja2 import Environment, DebugUndefined, Template
 
 from src.const.prompts import PROMPT
@@ -13,8 +15,10 @@ from src.utils.network import Request
 from src.utils.generate import generate
 from src.utils.database.player import search_player
 
+import src.plugins.jx3.calculator.dujing as dujing
+
 from .v2 import Qixue, Enchant
-from ._template import template_attrs_v4
+from ._template import template_attrs_v4, template_calculator_dujing_v2, msgbox_dujing
 
 import json
 
@@ -143,6 +147,58 @@ async def get_attrs_v4(server: str, name: str):
     school = kungfuInstance.school
     if not school:
         school = ""
+        
+    role_data = await search_player(role_name=name, server_name=server)
+    if role_data.format_jx3api()["code"] != 200:
+        return [PROMPT.PlayerNotExist]
+    uid = role_data.format_jx3api()["data"]["roleId"]
+    params = {
+        "zone": Server(server).zone,
+        "server": server,
+        "game_role_id": uid
+    }
+    equip_data = (await Request("https://m.pvp.xoyo.com/mine/equip/get-role-equip", params=params).post(tuilan=True)).json()
+    kungfu = Kungfu.with_internel_id(equip_data["data"]["Kungfu"]["KungfuID"])
+    if kungfu.name != "毒经":
+        return [PROMPT.CalculatorNotMatch]
+    analyzed_data: dujing.ExcelRequest = await dujing.analyze_attrs(equip_data)
+    calculated_data = await dujing.get_calculated_data(**(analyzed_data.__dict__))
+    tables = []
+    max_dps = calculated_data["data"]["result"] # 手打
+    min_dps = int(max_dps*0.985) # 一键宏
+    # 分为两栏渲染，从上至下，从左至右阅读
+    for index_l in range(len(calculated_data) // 2):
+        index_r = index_l + len(calculated_data) // 2
+        try:
+            tables.append(
+                Template(template_calculator_dujing_v2).render(**{
+                    "skill": calculated_data["data"]["skills"][index_l],
+                    "display": str(int(round(float(calculated_data["data"]["percent"][index_l][:-1])/float(calculated_data["data"]["percent"][0][:-1]), 2)*100)) + "%",
+                    "percent": calculated_data["data"]["percent"][index_l],
+                    "count": str(calculated_data["data"]["counts"][index_l]) + "（" + calculated_data["data"]["critical"][index_l] + "会心）",
+                    "value": calculated_data["data"]["damages"][index_l],
+                    "skill_2": calculated_data["data"]["skills"][index_r],
+                    "display_2": str(int(round(float(calculated_data["data"]["percent"][index_r][:-1])/float(calculated_data["data"]["percent"][0][:-1]), 2)*100)) + "%",
+                    "percent_2": calculated_data["data"]["percent"][index_r],
+                    "count_2": str(calculated_data["data"]["counts"][index_r]) + "（" + calculated_data["data"]["critical"][index_r] + "会心）",
+                    "value_2": calculated_data["data"]["damages"][index_r]
+                })
+            )
+        except IndexError:  # 若总共奇数行，则最后在左列输出一行
+            tables.append(
+                Template(template_calculator_dujing_v2).render(**{
+                    "skill": calculated_data["data"]["skills"][index_l],
+                    "display": str(int(round(float(calculated_data["data"]["percent"][index_l][:-1])/float(calculated_data["data"]["percent"][0][:-1]), 2)*100)) + "%",
+                    "percent": calculated_data["data"]["percent"][index_l],
+                    "count": str(calculated_data["data"]["counts"][index_l]) + "（" + calculated_data["data"]["critical"][index_l] + "会心）",
+                    "value": calculated_data["data"]["damages"][index_l],
+                    "skill_2": "",
+                    "display_2": "",
+                    "percent_2": "",
+                    "count_2": "",
+                    "value_2": ""
+                })
+            )
 
     html = str(
         SimpleHTML(
@@ -156,7 +212,19 @@ async def get_attrs_v4(server: str, name: str):
             table_content = "{{ table_content }}",
             font = build_path(ASSETS, ["font", "custom.ttf"]),
             school = build_path(ASSETS, ["image", "school", school + ".svg"]),
-            color = kungfuInstance.color
+            color = kungfuInstance.color,
+            # calulator
+            yozai = build_path(ASSETS, ["font", "Yozai-Medium.ttf"]),
+            msgbox = Template(msgbox_dujing).render(**{
+                "max": max_dps,
+                "min": min_dps
+            }),
+            tables = "\n".join(tables),
+            school = "毒经",
+            color = Kungfu("毒经").color,
+            server = server,
+            name = name,
+            calculator = "【雾海寻龙】毒经DPS计算器 240806"
         )
     )
     for location in ["帽子", "上衣", "腰带", "护臂", "裤子", "鞋", "项链", "腰坠", "戒指", "戒指", "投掷囊"]: # 武器单独适配，此处适配全身除武器以外的
